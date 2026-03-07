@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--color-gray-50);
+  --color-foreground: var(--color-gray-900);
+  --color-primary: var(--color-black);
+  --color-primary-foreground: var(--color-white);
+  --color-secondary: var(--color-gray-100);
+  --color-secondary-foreground: var(--color-gray-900);
+  --color-muted: var(--color-gray-500);
+  --color-muted-foreground: var(--color-gray-600);
+  --color-border: var(--color-gray-200);
+  --color-card: var(--color-white);
+  --color-card-foreground: var(--color-gray-900);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
