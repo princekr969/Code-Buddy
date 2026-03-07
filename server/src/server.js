@@ -1,7 +1,31 @@
+import dotenv from "dotenv"
+dotenv.config();
 import express from 'express';
-
+import cors from 'cors';
+import mongoose from 'mongoose';
+import authRoutes from './routes/auth.route.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+app.use(express.json());
+
+const allowedOrigins = [
+    process.env.DEVELOPMENT_FRONTEND_URL, 
+    process.env.PRODUCTION_FRONTEND_URL  
+];
+  
+app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      },
+      credentials: true,
+    })
+);
 
 
 // Global error handling
@@ -10,10 +34,13 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: 'Something went wrong!' });
 });
 
+// Routes
+app.use('/api/auth', authRoutes);
+
 // mongodb connection
 mongoose.connect(process.env.MONGODB_CONNECTION).then(()=>
 {
-    server.listen(PORT, ()=>
+    app.listen(PORT, ()=>
     {
         console.log(`Server is live on port ${PORT}!`);
     })
