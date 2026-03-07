@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import './App.css'
-import Home from "./pages/Home";
+import Toast from "./components/common/Toast";
+import { AuthPage, Home } from './pages';
 
 
 function App() {
@@ -10,7 +11,9 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/auth" element={<AuthPage />} />
       </Routes>
+      <Toast />
     </Router>
   )
 }

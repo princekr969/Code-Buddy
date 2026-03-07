@@ -1,3 +1,4 @@
+import { useState } from "react"
 import Button from "../components/ui/Button"
 import { Card, CardContent } from "../components/ui/Card"
 import { motion } from "framer-motion"
@@ -6,7 +7,7 @@ import { Link } from "react-router-dom"
 import Tilt from 'react-parallax-tilt';
 import { CodeEditor } from "../components/home/code-editor"
 import LanguageSlider from "../components/home/language-slider"
-import { useState } from "react"
+import Navbar from "../components/common/Navbar"
 
 const features = [
   {
@@ -42,99 +43,25 @@ const features = [
 ]
 
 export default function Home() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-slate-950">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-white/20 bg-slate-950/95 backdrop-blur supports-[backdrop-filter]:bg-slate-950/75">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Code2 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-            <span className="text-lg sm:text-xl font-bold text-white">
-              Code-Buddy
-            </span>
-          </div>
-          
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
-            <a href="#features" className="text-sm text-gray-300 hover:text-white transition-colors">
-              Features
-            </a>
-            <a href="#languages" className="text-sm text-gray-300 hover:text-white transition-colors">
-              Languages
-            </a>
-          </nav>
-          
-          <div className="flex items-center gap-2 sm:gap-4">
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-gray-300 hover:text-white"
-            >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+        <header className="sticky top-0 z-50 w-full border-b border-white/20 bg-slate-950/95 backdrop-blur supports-[backdrop-filter]:bg-slate-950/75">
+          <Navbar />
+        </header>
+      
+
+      <main className="relative min-h-screen bg-slate-950 flex flex-col items-center justify-center overflow-hidden">
+        {/* Animated Background Elements - Dark Theme */}
+        <div className="absolute inset-0 overflow-hidden">
+            {/* Gradient Orbs */}
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/20 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/20 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-500/10 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
             
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="hidden md:inline-flex bg-gray-700 text-gray-200 hover:text-white hover:scale-105 hover:bg-gray-600 transition-all duration-300 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm"
-            >
-              Log In
-            </Button>
-            <Button 
-              size="sm" 
-              className="hidden md:inline-flex bg-slate-900 text-white border border-white/50 hover:text-white hover:bg-slate-800 hover:border-white transition-all duration-300 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm"
-            >
-              Sign Up
-            </Button>
-          </div>
+            {/* Grid Pattern */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
         </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="md:hidden bg-slate-950 border-t border-white/10 py-4 px-4"
-          >
-            <nav className="flex flex-col space-y-3">
-              <a 
-                href="#features" 
-                className="text-gray-300 border-b border-white/20 hover:text-white py-2 px-3 rounded-lg hover:bg-gray-800 transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Features
-              </a>
-              <a 
-                href="#languages" 
-                className="text-gray-300 border-b border-white/20 hover:text-white py-2 px-3 rounded-lg hover:bg-gray-800 transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Languages
-              </a>
-              <div className="pt-2 flex flex-col space-y-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="w-full bg-gray-700 text-gray-200 hover:text-white hover:bg-gray-600"
-                >
-                  Log In
-                </Button>
-                <Button 
-                  size="sm" 
-                  className="w-full bg-slate-900 text-white border border-white/50 hover:bg-slate-800"
-                >
-                  Sign Up
-                </Button>
-              </div>
-            </nav>
-          </motion.div>
-        )}
-      </header>
-
-      <main>
         {/* Hero Section */}
         <section className="relative overflow-hidden py-12 sm:py-16 md:py-20 lg:py-24 bg-slate-950">
           <div className="px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl">
@@ -160,7 +87,7 @@ export default function Home() {
               >
                 Collaborate on code in{' '}
                 <span className="relative whitespace-nowrap">
-                  <span className="relative bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                  <span className="relative bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                     real-time
                   </span>
                   <svg
@@ -178,8 +105,8 @@ export default function Home() {
                     />
                     <defs>
                       <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#4ade80" />
-                        <stop offset="100%" stopColor="#10b981" />
+                        <stop offset="0%" stopColor="#C084FC" />
+                        <stop offset="100%" stopColor="#F472B6" />
                       </linearGradient>
                     </defs>
                   </svg>
@@ -202,7 +129,7 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
-                <Link to="/dashboard" className="w-full sm:w-auto">
+                <Link to="/auth" className="w-full sm:w-auto">
                   <Button 
                     size="lg" 
                     className="w-full sm:w-auto flex items-center justify-center bg-gray-900 border border-white/20 text-white hover:bg-gray-800 hover:border-white/60 transition-all duration-300 group px-6 py-3 sm:px-8 sm:py-4 text-sm sm:text-base"
@@ -307,47 +234,30 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-white/40 bg-slate-950">
         <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-          {/* Footer Links */}
-          {/* <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 sm:gap-8 py-8 sm:py-12">
-            <div>
-              <h4 className="text-white font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Product</h4>
-              <ul className="space-y-2 text-xs sm:text-sm text-gray-400">
-                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#languages" className="hover:text-white transition-colors">Languages</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Company</h4>
-              <ul className="space-y-2 text-xs sm:text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Resources</h4>
-              <ul className="space-y-2 text-xs sm:text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">API</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Support</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Legal</h4>
-              <ul className="space-y-2 text-xs sm:text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
-              </ul>
-            </div>
-          </div> */}
           
           <div className="py-4 sm:py-6 text-center text-xs sm:text-sm text-gray-400 border-t border-white/10">
             © 2024 Code-Buddy. All rights reserved.
           </div>
         </div>
       </footer>
+      {/* Animation Keyframes */}
+            <style jsx>{`
+                @keyframes blob {
+                    0% { transform: translate(0px, 0px) scale(1); }
+                    33% { transform: translate(30px, -50px) scale(1.1); }
+                    66% { transform: translate(-20px, 20px) scale(0.9); }
+                    100% { transform: translate(0px, 0px) scale(1); }
+                }
+                .animate-blob {
+                    animation: blob 7s infinite;
+                }
+                .animation-delay-2000 {
+                    animation-delay: 2s;
+                }
+                .animation-delay-4000 {
+                    animation-delay: 4s;
+                }
+            `}</style>
     </div>
   )
 }
