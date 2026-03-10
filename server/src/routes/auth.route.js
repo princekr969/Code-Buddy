@@ -1,11 +1,12 @@
 import {login, signup} from "../controllers/auth.controller.js"
+import { googleAuth, googleCallback } from "../controllers/oAuth.controller.js";
 import {Router} from 'express';
 const router = Router();
 
-// Signup Route
 router.post('/signup', signup);
-
-// Login Route
 router.post('/login', login);
+
+router.get("/google", googleAuth);
+router.get("/google/callback", googleCallback);
 
 export default router;

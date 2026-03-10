@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
 import  toast  from "react-hot-toast"
-import AuthService from "../../services/authService"
+import AuthService from "../../services/authService.js"
 import {
   Mail,
   Lock,
@@ -27,7 +28,6 @@ const AuthForm = () => {
 
   const navigate = useNavigate();
   
-  const authService = new AuthService();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -47,7 +47,7 @@ const AuthForm = () => {
           return
         }
         
-        const res = await authService.signUp(name, email, password, username);
+        const res = await AuthService.signUp(name, email, password, username);
 
         if(!res.success)
         {
@@ -56,9 +56,9 @@ const AuthForm = () => {
         }
         toast.success("Signup successful!");
         setIsSignup(false);
+        navigate("/auth?mode=login")
       } 
       else {
-        
         const { email, password } = formData;
         
         if (!email || !password) {
@@ -66,7 +66,7 @@ const AuthForm = () => {
           return
         }
         
-        const res = await authService.loginUser(email, password);
+        const res = await AuthService.loginUser(email, password);
 
         if(!res.success){
           toast.error(res.message);
@@ -169,6 +169,8 @@ const AuthForm = () => {
           {isSignup ? (
             <>
               Already have an account?{" "}
+              <Link to="/auth?mode=login">
+              
               <button
                 type="button"
                 onClick={() => setIsSignup(false)}
@@ -176,17 +178,20 @@ const AuthForm = () => {
               >
                 Log In
               </button>
+              </Link>
             </>
           ) : (
-            <>
+            <>  
               Don't have an account?{" "}
-              <button
-                type="button"
-                onClick={() => setIsSignup(true)}
-                className="text-black underline hover:text-gray-800"
-              >
-                Sign Up
-              </button>
+              <Link to="/auth?mode=signup">
+                <button
+                  type="button"
+                  onClick={() => setIsSignup(true)}
+                  className="text-black underline hover:text-gray-800"
+                >
+                  Sign Up
+                </button>
+              </Link>
             </>
           )}
         </div>

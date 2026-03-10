@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Code2, Sparkles, ArrowLeft, Github } from 'lucide-react';
+import { Sparkles, ArrowLeft } from 'lucide-react';
 import AuthForm from "../components/forms/AuthForm";
-import Navbar from '../components/common/Navbar';
+import oauthService from '../services/oauthService';
 
 export default function AuthPage() {
     const [searchParams] = useSearchParams();
@@ -16,8 +16,7 @@ export default function AuthPage() {
     }, [mode]);
 
     const handleGoogleAuth = () => {
-        // Redirect to Google OAuth endpoint
-        window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
+        oauthService.loginWithGoogle();
     };
 
 
@@ -50,14 +49,14 @@ export default function AuthPage() {
 
             {/* Main Content */}
             <div className="relative z-10 w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20">
-                <div className="flex flex-col-reverse flex-row items-center justify-center gap-8 lg:gap-16">
+                <div className="flex flex-row items-center justify-center gap-8 lg:gap-16">
                     
                     {/* Left Section - Value Proposition */}
                     <motion.div 
                         initial={{ opacity: 0, x: -50 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.6 }}
-                        className="hidden md:block w-full lg:w-1/2 text-center text-left"
+                        className="hidden md:block w-full lg:w-1/2 text-left"
                     >
                         <div className="inline-flex items-center rounded-full bg-gradient-to-r from-purple-600/10 to-pink-600/10 border border-purple-500/20 px-3 py-1 text-sm text-purple-400 mb-6">
                             <Sparkles className="w-4 h-4 mr-2" />

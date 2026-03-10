@@ -1,49 +1,131 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import User from "../models/User.model.js"
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import User from "../models/User.model.js";
 
-// Signup
+const generateAccessToken = (user) => {
+  return jwt.sign(
+    {
+      id: user._id,
+      username: user.username,
+      email: user.email
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "15m" }
+  );
+};
+
+const generateRefreshToken = (user) => {
+  return jwt.sign(
+    { id: user._id },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: "7d" }
+  );
+};
+
+
+// ================= SIGNUP =================
 export const signup = async (req, res) => {
   try {
     const { name, email, password, username } = req.body;
 
-    let existingUser = await User.findOne({ email });
-
-    if(existingUser){
-        return res.status(400).json({ message: 'User already exists' });
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+      return res.status(400).json({ message: "User already exists" });
     }
 
-    existingUser = await User.findOne({ username });
-
-    if(existingUser){
-        return res.status(400).json({ message: 'username taken, try another one...' });
+    const usernameExists = await User.findOne({ username });
+    if (usernameExists) {
+      return res.status(400).json({ message: "Username already taken" });
     }
 
-    const hashedPwd = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPwd, username });
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      name,
+      email,
+      username,
+      password: hashedPassword,
+      provider: "local"
+    });
+
     await user.save();
-    
-    const token = jwt.sign({ id: user._id, username: user.username, email: user.email, name: user.name }, process.env.JWT_SECRET, { expiresIn: '2h' });
-    res.status(200).json({ token });
-    res.status(201).json({ message: 'User created successfully', token });
+
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    res.status(201).json({
+      message: "User created successfully",
+      accessToken,
+      refreshToken
+    });
+
   } catch (err) {
-    res.status(500).json({ message: 'Error creating user', error: err.message });
+    res.status(500).json({
+      message: "Signup error",
+      error: err.message
+    });
   }
 };
 
-// Login
+// ================= LOGIN =================
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    console.log("user",user)
+
+    if (!user || !user.password) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
-    const token = jwt.sign({ id: user._id, username: user.username, email: user.email, name: user.name }, process.env.JWT_SECRET, { expiresIn: '2h' });
-    res.status(200).json({ token });
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+    console.log(process.env.JWT_REFRESH_SECRET, "-",process.env.JWT_SECRET)
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    res.status(200).json({
+      accessToken,
+      refreshToken
+    });
+
   } catch (err) {
-    res.status(500).json({ message: 'Error in logging', error: err.message });
+    res.status(500).json({
+      message: "Login error",
+      error: err.message
+    });
+  }
+};
+
+export const logout = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    const user = await User.findOne({ refreshToken });
+
+    if (!user) {
+      return res.status(200).json({ message: "Already logged out" });
+    }
+
+    user.refreshToken = null;
+    await user.save();
+
+    res.status(200).json({ message: "Logged out successfully" });
+
+  } catch (err) {
+    res.status(500).json({
+      message: "Logout error",
+      error: err.message
+    });
   }
 };

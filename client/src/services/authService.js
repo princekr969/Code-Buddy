@@ -1,123 +1,102 @@
-// login - api/auth/login
-// signup - api/auth/signup
-class AuthService
-{
-    url = import.meta.env.VITE_BACKEND_URL;
+import axios from "axios";
 
-    async loginUser(email, password)
-    {
-        let response;
+class AuthService {
+  url = import.meta.env.VITE_BACKEND_URL;
 
-        try{
-            response = await fetch(
-                this.url + "api/auth/login",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        email,
-                        password
-                    })
-                }
-            );
-        }
-        catch(err)
-        {
-            console.log(err);
-        }
+  constructor() {
+    this.api = axios.create({
+      baseURL: this.url,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
 
-        if(response.status == 404)
-            return { success: false, message: "Invalid Email" };
-        if(response.status == 400)
-            return { success: false, message: "Invalid password" };
-        if(response.status == 500)
-            return { success: false, message: "Internal server error" };
+  async loginUser(email, password) {
+    try {
+      const response = await this.api.post("/api/auth/login", {
+        email,
+        password,
+      });
 
-        // response = { token }
-        const token = (await response.json()).token;
+      const token = response.data.token;
 
+      localStorage.setItem("token", token);
+
+      return { success: true, token };
+    } catch (err) {
+      if (err.response) {
+        if (err.response.status === 404)
+          return { success: false, message: "User not found" };
+
+        if (err.response.status === 400)
+          return { success: false, message: "Invalid credentials" };
+
+        if (err.response.status === 500)
+          return { success: false, message: "Internal server error" };
+      }
+
+      return { success: false, message: "Network error" };
+    }
+  }
+
+  async signUp(name, email, password, username) {
+    try {
+      const response = await this.api.post("/api/auth/signup", {
+        name,
+        email,
+        password,
+        username,
+      });
+
+      const { token, message } = response.data;
+
+      if (token) {
         localStorage.setItem("token", token);
+      }
 
-        return { success: true, token };
+      return { success: true, message, token };
+    } catch (err) {
+      if (err.response) {
+        if (err.response.status === 400)
+          return { success: false, message: "User already exists" };
+
+        if (err.response.status === 500)
+          return { success: false, message: "Internal server error" };
+      }
+
+      return { success: false, message: "Network error" };
     }
+  }
 
-    async signUp(name, email, password, username)
-    {
-        let response;
+  getToken() {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
 
-        try{
-            response = await fetch(
-                this.url + "api/auth/signup",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        name,
-                        email,
-                        password,
-                        username
-                    })
-                }
-            );
-        }
-        catch(err)
-        {
-            console.log(err);
-        }
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
 
-        if(response.status == 400)
-            return { success: false, message: "User already exists" };
-        if(response.status == 500)
-            return { success: false, message: "Internal server error" };
-            
-        // response = { message }
-        const message = (await response.json()).message;
-        return { success: true, message  };
+      if (payload.exp && payload.exp > currentTime) {
+        return token;
+      } else {
+        this.logout();
+        return null;
+      }
+    } catch (err) {
+      console.error("Error decoding JWT:", err);
+      return null;
     }
+  }
 
-    getToken()
-    {
-        const token = localStorage.getItem("token");
-        if (!token) return null;
+  logout() {
+    localStorage.removeItem("token");
+  }
 
-        // check for expiration of token, if expire return null
-        try
-        {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            const currentTime = Math.floor(Date.now() / 1000);
-
-            if(payload.exp && payload.exp > currentTime)
-            {
-                return token; 
-            } 
-            else
-            {
-                this.logout();
-                return null;
-            }
-        } 
-        catch(err)
-        {
-            console.error("Error decoding JWT:", err);
-            return null;
-        }
-    }
-
-
-    logout()
-    {
-        localStorage.removeItem("token");
-    }
-
-    getUserData()
-    {
-        const token = this.getToken();
-        return token ? JSON.parse(atob(token.split('.')[1])) : null;
-    }
+  getUserData() {
+    const token = this.getToken();
+    return token ? JSON.parse(atob(token.split(".")[1])) : null;
+  }
 }
 
-export default AuthService;
+export default new AuthService();
