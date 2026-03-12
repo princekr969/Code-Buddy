@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.model.js";
 
+
 const generateAccessToken = (user) => {
   return jwt.sign(
     {
@@ -55,11 +56,21 @@ export const signup = async (req, res) => {
 
     user.refreshToken = refreshToken;
     await user.save();
+        res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax"
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax"
+    });
+
 
     res.status(201).json({
       message: "User created successfully",
-      accessToken,
-      refreshToken
     });
 
   } catch (err) {
@@ -87,17 +98,26 @@ export const login = async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
-    console.log(process.env.JWT_REFRESH_SECRET, "-",process.env.JWT_SECRET)
+
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
     user.refreshToken = refreshToken;
     await user.save();
 
-    res.status(200).json({
-      accessToken,
-      refreshToken
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax"
     });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax"
+    });
+
+    res.status(200).json({message:"Login successful"});
 
   } catch (err) {
     res.status(500).json({
@@ -109,16 +129,30 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies.refreshToken;
 
-    const user = await User.findOne({ refreshToken });
-
-    if (!user) {
+    if (!refreshToken) {
       return res.status(200).json({ message: "Already logged out" });
     }
 
-    user.refreshToken = null;
-    await user.save();
+    const user = await User.findOne({ refreshToken });
+
+    if (user) {
+      user.refreshToken = null;
+      await user.save();
+    }
+
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false
+    });
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false
+    });
 
     res.status(200).json({ message: "Logged out successfully" });
 

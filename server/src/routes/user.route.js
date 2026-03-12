@@ -3,6 +3,6 @@ import {getCurrentUser} from '../controllers/user.controller.js'
 import {Router} from 'express';
 const router = Router();
 
-router.get("/me", authenticate, getCurrentUser);
+router.get("/me", verifyToken, getCurrentUser);
 
 export default router;

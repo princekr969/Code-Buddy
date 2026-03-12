@@ -3,7 +3,7 @@ import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Sparkles, ArrowLeft } from 'lucide-react';
 import AuthForm from "../components/forms/AuthForm";
-import oauthService from '../services/oauthService';
+import authService from '../services/authService';
 
 export default function AuthPage() {
     const [searchParams] = useSearchParams();
@@ -16,7 +16,7 @@ export default function AuthPage() {
     }, [mode]);
 
     const handleGoogleAuth = () => {
-        oauthService.loginWithGoogle();
+        authService.loginWithGoogle();
     };
 
 

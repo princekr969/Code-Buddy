@@ -17,7 +17,7 @@ class AuthService {
       const response = await this.api.post("/api/auth/login", {
         email,
         password,
-      });
+      },{withCredentials:true});
 
       const token = response.data.token;
 
@@ -47,15 +47,12 @@ class AuthService {
         email,
         password,
         username,
-      });
+      },
+    {withCredentials:true});
 
-      const { token, message } = response.data;
+      const { message } = response.data;
 
-      if (token) {
-        localStorage.setItem("token", token);
-      }
-
-      return { success: true, message, token };
+      return { success: true, message };
     } catch (err) {
       if (err.response) {
         if (err.response.status === 400)
@@ -69,33 +66,20 @@ class AuthService {
     }
   }
 
-  getToken() {
-    const token = localStorage.getItem("token");
-    if (!token) return null;
+  loginWithGoogle() {
+    window.location.href = `${this.url}/api/auth/google`;
+  }
 
+  async logout() {
     try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const currentTime = Math.floor(Date.now() / 1000);
-
-      if (payload.exp && payload.exp > currentTime) {
-        return token;
-      } else {
-        this.logout();
-        return null;
-      }
-    } catch (err) {
-      console.error("Error decoding JWT:", err);
-      return null;
+        await this.api.post(
+        "/api/auth/logout",
+        {},
+        { withCredentials: true }
+    );
+    } catch (error) {
+      return { success: false, message: "logout failed" };
     }
-  }
-
-  logout() {
-    localStorage.removeItem("token");
-  }
-
-  getUserData() {
-    const token = this.getToken();
-    return token ? JSON.parse(atob(token.split(".")[1])) : null;
   }
 }
 

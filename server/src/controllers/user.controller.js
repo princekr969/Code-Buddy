@@ -1,5 +1,6 @@
-const User = require('../models/User');
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+import User from '../models/User.model.js';
+
 
 export const getUserById = async (req, res) => {
   try {

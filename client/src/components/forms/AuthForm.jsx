@@ -10,11 +10,14 @@ import {
   RefreshCw
 } from "lucide-react"
 import { useNavigate, useSearchParams } from "react-router-dom";
+import {useAppContext} from "../../context/AppContext.jsx"
+import userService from "../../services/userService.js"
 
 
 const AuthForm = () => {
     const [searchParams] = useSearchParams();
     const mode = searchParams.get('mode') || 'login';
+    const {setCurrentUser} = useAppContext();
 
     
   const [isSignup, setIsSignup] = useState(mode === 'signup');
@@ -54,9 +57,18 @@ const AuthForm = () => {
           toast.error(res.message);
           return;
         }
-        toast.success("Signup successful!");
-        setIsSignup(false);
-        navigate("/auth?mode=login")
+
+        const userRes = await userService.getCurrentUser();
+        if(userRes.success){
+          setCurrentUser(userRes?.user)
+          toast.success("Signup successful!");
+          setIsSignup(false);
+          navigate("/dashboard")
+        }
+
+
+        
+
       } 
       else {
         const { email, password } = formData;
@@ -73,8 +85,14 @@ const AuthForm = () => {
           return;
         }
 
-        toast.success("Login successful!");
-        navigate("/dashboard");
+        const userRes = await userService.getCurrentUser();
+        if(userRes.success){
+          setCurrentUser(userRes?.user)
+          toast.success("Login successful!");
+          setIsSignup(false);
+          navigate("/dashboard")
+        }
+
         
       }
     } catch (err) {
