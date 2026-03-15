@@ -79,6 +79,19 @@ class RoomService {
             return { success: false, message: 'Error fetching rooms' };
         }
     }
+
+    async getRoomMessages(roomId, limit = 50, skip = 0) {
+        try {
+            const res = await this.api.get(`/api/room/${roomId}/messages?limit=${limit}&skip=${skip}`, {withCredentials: true});
+            return res.data;
+        } catch (err) {
+            console.error('Error fetching messages:', err);
+            if (err.response) {
+                return { success: false, message: err.response.data.message || 'Error fetching messages' };
+            }
+            return { success: false, message: 'Error fetching messages' };
+        }
+    }   
 }
 
 export default new RoomService();

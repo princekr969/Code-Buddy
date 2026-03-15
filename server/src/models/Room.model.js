@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const fileSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  content: { type: String, required: true },
+  content: { type: String },
   room: { type: mongoose.Schema.Types.ObjectId, ref: 'Room', required: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 });

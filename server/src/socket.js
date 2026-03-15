@@ -32,7 +32,7 @@ export const setupSocketIO = (server) => {
       origin: process.env.CLIENT_URL || 'http://localhost:5173',
       credentials: true,
     },
-    transports: ['websocket'], 
+    transports: ['websocket'],
   });
 
   io.use((socket, next) => {
@@ -52,20 +52,16 @@ export const setupSocketIO = (server) => {
     // ---- ROOM MANAGEMENT ----
     socket.on(SOCKET_EVENTS.JOIN_ROOM, async ({ roomId }) => {
       try {
-        // Leave previous room if any
         if (currentRoom) {
           socket.leave(currentRoom);
           io.to(currentRoom).emit(SOCKET_EVENTS.USER_LEFT, { user: socket.user });
         }
 
-        // Join new room
         socket.join(roomId);
         currentRoom = roomId;
 
-        // Notify others in the room
         socket.to(roomId).emit(SOCKET_EVENTS.USER_JOINED, { user: socket.user });
 
-        // Send confirmation to the joining client
         socket.emit(SOCKET_EVENTS.ROOM_JOINED, { roomId });
 
         console.log(`${socket.user.name} joined room ${roomId}`);
@@ -75,22 +71,21 @@ export const setupSocketIO = (server) => {
       }
     });
 
-    // ---- FILE UPDATES (Yjs binary) ----
+    
+
+    // ---- FILE UPDATES 
     socket.on(SOCKET_EVENTS.FILE_UPDATED, ({ fileId, update }) => {
-      // Broadcast the binary update to all other clients in the same room
       if (currentRoom) {
         socket.to(currentRoom).emit(SOCKET_EVENTS.FILE_UPDATED, { fileId, update });
       }
     });
 
-    // ---- FILE SAVE (persist to database) ----
+    // ---- FILE SAVE ----
     socket.on(SOCKET_EVENTS.FILE_SAVED, async ({ fileId, content }) => {
       try {
-        // Update the file content in the database
         await File.findByIdAndUpdate(fileId, { content });
         console.log(`File ${fileId} saved by ${socket.user.name}`);
 
-        // Notify other clients that the file has been saved (optional)
         if (currentRoom) {
           socket.to(currentRoom).emit(SOCKET_EVENTS.FILE_SAVED, { fileId });
         }
@@ -103,21 +98,19 @@ export const setupSocketIO = (server) => {
     // ---- FILE CREATED ----
     socket.on(SOCKET_EVENTS.FILE_CREATED, async ({ file }) => {
       try {
-        // Save the new file to the database (assuming file includes room reference)
+        console.log(`Creating file ${file.name} in room ${file.room} by ${socket.user.name}`);
         const newFile = new File({
           name: file.name,
           content: file.content || '',
-          room: file.room, // room ID should be provided
-          owner: socket.user._id, // set owner from authenticated user
+          room: file.room, 
+          owner: socket.user._id, 
         });
         await newFile.save();
 
-        // Also add file reference to the Room document
         await Room.findByIdAndUpdate(file.room, {
           $push: { files: newFile._id }
         });
 
-        // Broadcast the created file to others in the room
         if (currentRoom) {
           io.to(currentRoom).emit(SOCKET_EVENTS.FILE_CREATED, {
             file: { ...newFile.toObject(), owner: socket.user }
@@ -129,19 +122,38 @@ export const setupSocketIO = (server) => {
       }
     });
 
+    // ---- FILE RENAMED ----
+    socket.on(SOCKET_EVENTS.FILE_RENAMED, async ({ fileId, newName }) => {
+      try {
+        const updatedFile = await File.findByIdAndUpdate(
+          fileId,
+          { name: newName },
+          { new: true }
+        );
+
+        if (updatedFile && currentRoom) {
+          io.to(currentRoom).emit(SOCKET_EVENTS.FILE_RENAMED, {
+            fileId,
+            newName,
+          });
+          console.log(`File ${fileId} renamed to ${newName} by ${socket.user.name}`);
+        }
+      } catch (error) {
+        console.error('Error renaming file:', error);
+        socket.emit('error', { message: 'Failed to rename file' });
+      }
+    });
+
     // ---- FILE DELETED ----
     socket.on(SOCKET_EVENTS.FILE_DELETED, async ({ fileId }) => {
       try {
-        // Remove the file from database
         const file = await File.findByIdAndDelete(fileId);
         if (file) {
-          // Remove file reference from its room
           await Room.findByIdAndUpdate(file.room, {
             $pull: { files: fileId }
           });
         }
 
-        // Broadcast deletion to others
         if (currentRoom) {
           io.to(currentRoom).emit(SOCKET_EVENTS.FILE_DELETED, { fileId });
         }
@@ -154,9 +166,9 @@ export const setupSocketIO = (server) => {
     // ---- CHAT MESSAGES ----
     socket.on(SOCKET_EVENTS.SEND_MESSAGE, async ({ content }) => {
       if (!currentRoom) return;
+      console.log(`Message from ${socket.user.name} in room ${currentRoom}: ${content}`);
 
       try {
-        // Create and save the message
         const message = new Message({
           user: socket.user._id,
           message: content,
@@ -164,10 +176,8 @@ export const setupSocketIO = (server) => {
         });
         await message.save();
 
-        // Populate user info for the client
         const populatedMessage = await message.populate('user', 'name');
 
-        // Broadcast to all clients in the room (including sender)
         io.to(currentRoom).emit(SOCKET_EVENTS.NEW_MESSAGE, populatedMessage);
       } catch (error) {
         console.error('Error sending message:', error);
@@ -199,7 +209,6 @@ export const setupSocketIO = (server) => {
     socket.on('disconnect', () => {
       console.log(`User disconnected: ${socket.user.name} (${socket.id})`);
       if (currentRoom) {
-        // Notify others that user left
         socket.to(currentRoom).emit(SOCKET_EVENTS.USER_LEFT, { user: socket.user });
       }
     });

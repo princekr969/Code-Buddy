@@ -11,7 +11,7 @@ const generateAccessToken = (user) => {
       email: user.email
     },
     process.env.JWT_SECRET,
-    { expiresIn: "15m" }
+    { expiresIn: "7d" }
   );
 };
 
@@ -27,16 +27,11 @@ const generateRefreshToken = (user) => {
 // ================= SIGNUP =================
 export const signup = async (req, res) => {
   try {
-    const { name, email, password, username } = req.body;
+    const { name, email, password,  } = req.body;
 
     const emailExists = await User.findOne({ email });
     if (emailExists) {
       return res.status(400).json({ message: "User already exists" });
-    }
-
-    const usernameExists = await User.findOne({ username });
-    if (usernameExists) {
-      return res.status(400).json({ message: "Username already taken" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -44,7 +39,6 @@ export const signup = async (req, res) => {
     const user = new User({
       name,
       email,
-      username,
       password: hashedPassword,
       provider: "local"
     });

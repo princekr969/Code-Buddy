@@ -15,7 +15,6 @@ function App() {
     <Router>
       <AuthProvider>
         <Routes>
-          <Route element={<MainLayout/>}>
 
           
           <Route
@@ -32,8 +31,9 @@ function App() {
               </PrivateRoute>
             }
           />
-          <Route path="/" element={<Home />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route element={<MainLayout/>}>
+          <Route path="/" element={<Home />} />
           <Route
             path="/dashboard/:id"
             element={

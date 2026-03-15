@@ -1,20 +1,22 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { useAuthContext } from './AuthContext';
-import { useSocket } from './SocketContext';
-import { SocketEvent } from '../types/socket';
+import React, { createContext, useContext, useState, useCallback } from "react";
+import { useAuthContext } from "./AuthContext";
+import { useRoomContext } from "./RoomContext";
+import { useSocket } from "./SocketContext";
+import { SocketEvent } from "../types/socket";
 
 const FileContext = createContext();
 
 export const useFileSystem = () => {
   const context = useContext(FileContext);
   if (!context) {
-    throw new Error('useFileSystem must be used within a FileProvider');
+    throw new Error("useFileSystem must be used within a FileProvider");
   }
   return context;
 };
 
 export const FileProvider = ({ children, initialFiles = [] }) => {
   const { currentUser } = useAuthContext();
+  const { roomId } = useRoomContext();
   const { socket, isConnected, emit } = useSocket();
 
   const [files, setFiles] = useState(initialFiles);
@@ -25,63 +27,98 @@ export const FileProvider = ({ children, initialFiles = [] }) => {
     (fileData) => {
       const newFile = {
         _id: fileData._id || `file-${Date.now()}`,
-        name: fileData.name || 'untitled',
-        content: fileData.content || '',
-        language: fileData.language || 'plaintext',
-        owner: fileData.owner || currentUser,
+        name: fileData.name || "untitled",
+        content: fileData.content || "",
         isDirty: false,
         ...fileData,
       };
+
       setFiles((prev) => [...prev, newFile]);
       openFile(newFile._id);
 
-      if (isConnected) {
-        emit(SocketEvent.FILE_CREATED, { file: newFile });
+      if (isConnected && roomId) {
+        emit(SocketEvent.FILE_CREATED, {
+          file: {
+            name: newFile.name,
+            content: newFile.content,
+            room: roomId,
+          },
+        });
       }
 
       return newFile;
     },
-    [currentUser, isConnected, emit]
+    [currentUser, isConnected, emit, roomId],
   );
 
-  const renameFile = useCallback((fileId, newPath) => {
-    setFiles(prev =>
-      prev.map(f => f._id === fileId ? { ...f, path: newPath, name: newPath.split('/').pop() } : f)
-    );
-  }, []);
+  const renameFile = useCallback(
+    (fileId, newName) => {
+      setFiles((prev) =>
+        prev.map((f) => (f._id === fileId ? { ...f, name: newName } : f)),
+      );
+
+      setOpenFiles((prev) =>
+        prev.map((f) => (f._id === fileId ? { ...f, name: newName } : f)),
+      );
+      if (activeFile?._id === fileId) {
+        setActiveFile((prev) => ({ ...prev, name: newName }));
+      }
+
+      if (isConnected) {
+        emit(SocketEvent.FILE_RENAMED, { fileId, newName });
+      }
+    },
+    [isConnected, emit, activeFile],
+  );
 
   const updateFileContent = useCallback(
     (fileId, newContent, broadcast = true) => {
       setFiles((prev) =>
-        prev.map((file) => (file._id === fileId ? { ...file, content: newContent, isDirty: true } : file))
+        prev.map((file) =>
+          file._id === fileId
+            ? { ...file, content: newContent, isDirty: true }
+            : file,
+        ),
       );
       setOpenFiles((prev) =>
-        prev.map((file) => (file._id === fileId ? { ...file, content: newContent, isDirty: true } : file))
+        prev.map((file) =>
+          file._id === fileId
+            ? { ...file, content: newContent, isDirty: true }
+            : file,
+        ),
       );
       if (activeFile?._id === fileId) {
-        setActiveFile((prev) => ({ ...prev, content: newContent, isDirty: true }));
+        setActiveFile((prev) => ({
+          ...prev,
+          content: newContent,
+          isDirty: true,
+        }));
       }
 
       if (broadcast && isConnected) {
         emit(SocketEvent.FILE_UPDATED, { fileId, newContent });
       }
     },
-    [activeFile, isConnected, emit]
+    [activeFile, isConnected, emit],
   );
 
   const markFileAsSaved = useCallback(
     (fileId) => {
       setFiles((prev) =>
-        prev.map((file) => (file._id === fileId ? { ...file, isDirty: false } : file))
+        prev.map((file) =>
+          file._id === fileId ? { ...file, isDirty: false } : file,
+        ),
       );
       setOpenFiles((prev) =>
-        prev.map((file) => (file._id === fileId ? { ...file, isDirty: false } : file))
+        prev.map((file) =>
+          file._id === fileId ? { ...file, isDirty: false } : file,
+        ),
       );
       if (activeFile?._id === fileId) {
         setActiveFile((prev) => ({ ...prev, isDirty: false }));
       }
     },
-    [activeFile]
+    [activeFile],
   );
 
   const openFile = useCallback(
@@ -96,7 +133,7 @@ export const FileProvider = ({ children, initialFiles = [] }) => {
 
       setActiveFile(file);
     },
-    [files]
+    [files],
   );
 
   const closeFile = useCallback(
@@ -107,7 +144,7 @@ export const FileProvider = ({ children, initialFiles = [] }) => {
         setActiveFile(remaining.length > 0 ? remaining[0] : null);
       }
     },
-    [activeFile, openFiles]
+    [activeFile, openFiles],
   );
 
   const deleteFile = useCallback(
@@ -118,7 +155,7 @@ export const FileProvider = ({ children, initialFiles = [] }) => {
         emit(SocketEvent.FILE_DELETED, { fileId });
       }
     },
-    [closeFile, isConnected, emit]
+    [closeFile, isConnected, emit],
   );
 
   const value = {
@@ -126,7 +163,6 @@ export const FileProvider = ({ children, initialFiles = [] }) => {
     openFiles,
     activeFile,
     setActiveFile,
-    
     setFiles,
     setOpenFiles,
     createFile,

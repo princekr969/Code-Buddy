@@ -28,7 +28,6 @@ function MonacoEditor() {
   const { activeFile, setActiveFile, setFiles, setOpenFiles, files, openFiles } = useFileSystem();
   const { socket } = useSocket();
   
-  // Refs for editor instances
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
   const ydocRef = useRef(null);
@@ -70,7 +69,7 @@ function MonacoEditor() {
       inherit: true,
       rules: [],
       colors: {
-        "editor.background": "#1e1e1e",
+        "editor.background": "#0f172a",
       },
     });
     monaco.editor.setTheme("custom-dark");
@@ -101,10 +100,8 @@ function MonacoEditor() {
       ytext.insert(0, activeFile.content);
     }
     
-    // Set up awareness for cursor positions and user presence
     const awareness = new Awareness(ydoc);
     
-    // Set local user state
     awareness.setLocalState({
       user: {
         name: currentUser?.username || "Anonymous",
@@ -186,7 +183,6 @@ function MonacoEditor() {
     setOpenFiles(prev => prev.map(f => f._id === activeFile._id ? updatedFile : f));
   }, [activeFile, socket, setActiveFile, setFiles, setOpenFiles]);
   
-  // Handle keyboard shortcuts (Cmd+S / Ctrl+S)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
@@ -221,7 +217,7 @@ function MonacoEditor() {
   }
   
   return (
-    <div className="flex w-full flex-col h-screen">
+    <div className="flex w-full flex-col h-full">
       <Editor
         height="100%"
         width="100%"

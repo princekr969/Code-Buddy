@@ -4,51 +4,6 @@ import User from '../models/User.model.js';
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
-export const addMessageToRoom = async (req, res) => {
-  try {
-    const { roomId, userId, messageText } = req.body;
-
-    if (!isValidObjectId(roomId) || !isValidObjectId(userId)) {
-      return res.status(400).json({ message: 'Invalid room ID or user ID' });
-    }
-
-    const room = await Room.findById(roomId);
-    if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Create message
-    const newMessage = new Message({
-      user: userId,
-      message: messageText,
-      room: roomId,
-    });
-    await newMessage.save();
-
-    // Add reference to room
-    room.messages.push(newMessage._id);
-    await room.save();
-
-    // Populate user info for response
-    await newMessage.populate('user', 'name email username');
-
-    res.status(201).json({
-      success: true,
-      message: 'Message added successfully',
-      messageObj: newMessage,
-    });
-  } catch (error) {
-    console.error('Error adding message:', error);
-    res.status(500).json({ message: 'Error adding message', error: error.message });
-  }
-};
-
-// Get all messages of a room (with pagination optional)
 export const getRoomMessages = async (req, res) => {
   try {
     const { roomId } = req.params;
@@ -59,10 +14,11 @@ export const getRoomMessages = async (req, res) => {
     }
 
     const messages = await Message.find({ room: roomId })
-      .sort({ time: -1 }) // latest first
+      .sort({ time: -1 }) 
       .skip(parseInt(skip))
       .limit(parseInt(limit))
-      .populate('user', 'name email username');
+      .populate('user', 'name email');
+      console.log(`Fetched ${messages.length} messages for room ${roomId}`);
 
     res.status(200).json({
       success: true,
@@ -74,7 +30,6 @@ export const getRoomMessages = async (req, res) => {
   }
 };
 
-// Delete a message (optional)
 export const deleteMessage = async (req, res) => {
   try {
     const { roomId, messageId } = req.body;
