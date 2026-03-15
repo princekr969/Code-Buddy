@@ -1,19 +1,19 @@
-    import axios from "axios";
+import axios from "axios";
 
-    class UserService {
-    url = import.meta.env.VITE_BACKEND_URL;
+class UserService {
+  url = import.meta.env.VITE_BACKEND_URL;
 
-    constructor() {
-        this.api = axios.create({
-        baseURL: this.url,
-        headers: {
-            "Content-Type": "application/json",
-        },
-        withCredentials: true
-        });
-    }
+  constructor() {
+    this.api = axios.create({
+      baseURL: this.url,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      withCredentials: true
+    });
+  }
 
-    async getCurrentUser() {
+  async getCurrentUser() {
     try {
       const response = await this.api.get("/api/users/me");
       return {
@@ -35,6 +35,23 @@
     }
   }
 
+  async getUserById(userId) {
+    try {
+      const response = await this.api.get(`/api/users/${userId}`);
+      return {
+        success: true,
+        user: response.data
+      };
+    } catch (err) {
+      if (err.response?.status === 401) {
+        return {
+          success: false,
+          message: "Unauthorized"
+        };
+      }
     }
 
-    export default new UserService();
+  }
+}
+
+export default new UserService();

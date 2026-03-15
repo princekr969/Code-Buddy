@@ -1,26 +1,29 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import userService from "../services/userService";
 
-const AppContext = createContext(null);
+const AuthContext = createContext(null);
 
-export const useAppContext = () => {
-  return useContext(AppContext);
+export const useAuthContext = () => {
+  return useContext(AuthContext);
 };
 
-const AppProvider = ({ children }) => {
-  const [users, setUsers] = useState([]);
+const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
-  const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadUser = async () => {
+      setLoading(true);
       try {
         const res = await userService.getCurrentUser();
         if(res.success){
             setCurrentUser(res.user);
         }
       } catch (err) {
+        if (err.response?.status !== 401) {
+          console.error(err);
+        }
+        setCurrentUser(null);
 
       } finally {
         setLoading(false);
@@ -31,21 +34,17 @@ const AppProvider = ({ children }) => {
   }, []);
 
   return (
-    <AppContext.Provider
+    <AuthContext.Provider
       value={{
-        users,
-        setUsers,
         currentUser,
         setCurrentUser,
-        room,
-        setRoom,
         loading,
       }}
     >
       {children}
-    </AppContext.Provider>
+    </AuthContext.Provider>
   );
 };
 
-export { AppProvider };
-export default AppContext;
+export { AuthProvider };
+export default AuthContext;

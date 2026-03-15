@@ -12,6 +12,7 @@ class AuthService {
     });
   }
 
+
   async loginUser(email, password) {
     try {
       const response = await this.api.post("/api/auth/login", {
@@ -19,11 +20,8 @@ class AuthService {
         password,
       },{withCredentials:true});
 
-      const token = response.data.token;
+      return { success: true, message: response.data.message };
 
-      localStorage.setItem("token", token);
-
-      return { success: true, token };
     } catch (err) {
       if (err.response) {
         if (err.response.status === 404)

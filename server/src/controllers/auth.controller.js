@@ -103,6 +103,7 @@ export const login = async (req, res) => {
     const refreshToken = generateRefreshToken(user);
 
     user.refreshToken = refreshToken;
+    user.lastLoginProvider = "local";
     await user.save();
 
     res.cookie("accessToken", accessToken, {
@@ -161,5 +162,39 @@ export const logout = async (req, res) => {
       message: "Logout error",
       error: err.message
     });
+  }
+};
+
+export const refreshAccessToken = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(401).json({ message: "No refresh token" });
+    }
+
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET
+    );
+
+    const user = await User.findById(decoded.id);
+
+    if (!user || user.refreshToken !== refreshToken) {
+      return res.status(403).json({ message: "Invalid refresh token" });
+    }
+
+    const newAccessToken = generateAccessToken(user);
+
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false
+    });
+
+    res.json({ message: "Access token refreshed" });
+
+  } catch (err) {
+    res.status(403).json({ message: "Refresh failed" });
   }
 };

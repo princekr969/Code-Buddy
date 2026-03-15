@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
-import authService from "../services/authService";
-import userService from "../services/userService";
-import { useAppContext } from "../context/AppContext";
+import { useAuthContext } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import { Loader, Plus, Link as LinkIcon, Calendar } from "lucide-react";
+import roomService from "../services/roomService";
 
 const Dashboard = () => {
   const [rooms, setRooms] = useState([]);
@@ -15,30 +14,90 @@ const Dashboard = () => {
   const [joinRoomId, setJoinRoomId] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(true);
-  const { status, setStatus, currentUser, setCurrentUser } = useAppContext();
+  const { currentUser } = useAuthContext();
   const navigate = useNavigate();
 
-  // Fetch rooms on mount
-  useEffect(() => {
-    const fetchRooms = async () => {
-      // Implement your room fetching logic here
-      // setRooms(data);
-      setLoadingRooms(false);
-    };
-    fetchRooms();
-  }, []);
 
   const handleCreateRoom = async () => {
-    // Implement create room logic
+    if (!roomTitle.trim()) {
+      toast.error("Room title cannot be empty");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await roomService.createRoom(roomTitle);
+      if (res.success) {
+        toast.success("Room created successfully");
+        setRooms((prev) => [...prev, res.room]);
+        setShowCreateModal(false);
+        setRoomTitle("");
+        navigate(`/room/${res.room._id}`);
+      } else {
+        toast.error(res.message || "Failed to create room");
+      }
+    } catch (error) {
+      toast.error("Failed to create room");
+    } finally {
+      setLoading(false);
+    }
+
   };
 
   const handleJoin = async (roomId) => {
-    // Implement join room logic
+    setLoading(true);
+    try {
+      const res = await roomService.getRoomById(roomId);
+      if (res.success) {
+        navigate(`/room/${roomId}`);
+      } else {
+        toast.error(res.message || "Failed to join room");
+      }
+    } catch (error) {
+      toast.error("Failed to join room");
+    } finally {
+      setLoading(false);
+    }
   };    
 
   const handleJoinRoom = async () => {
-    // Implement join room from modal
+    if (!joinRoomId.trim()) {
+      toast.error("Room ID cannot be empty");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await roomService.getRoomById(joinRoomId);
+      if (res.success) {
+        navigate(`/room/${joinRoomId}`);
+      }
+      else {
+        toast.error(res.message || "Failed to join room");
+      }
+    } catch (error) {
+      toast.error("Failed to join room");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+      setLoadingRooms(true);
+    try {
+      const roomsData = await roomService.getRoomsById(currentUser._id);
+      if (!roomsData.success) toast.error(roomsData.message);
+      else setRooms(roomsData.rooms);
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+    } finally {
+      setLoadingRooms(false);
+    }
+  };
+
+  fetchRooms();
+  }, [rooms.length, currentUser._id]);
+
 
   return (
     <div className="relative min-h-screen bg-slate-950 text-white overflow-hidden">
@@ -50,7 +109,6 @@ const Dashboard = () => {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
       </div>
 
-      <Navbar />
 
       {loading && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex justify-center items-center">

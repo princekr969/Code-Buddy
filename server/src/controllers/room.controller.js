@@ -7,42 +7,38 @@ const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 export const createRoom = async (req, res) => {
   try {
-    const { owner, title } = req.body;
+    const { title } = req.body;
+    const owner = req.user.id;
+    console.log('Creating room with title:', title, 'and owner:', owner);
 
-    // Validate owner ID
-    if (!isValidObjectId(owner)) {
-      return res.status(400).json({ message: 'Invalid owner ID' });
-    }
-
-    // Check if owner exists
     const ownerExists = await User.findById(owner);
     if (!ownerExists) {
       return res.status(404).json({ message: 'Owner user not found' });
     }
 
-    // Create the initial file (embedded reference style)
     const defaultFileName = 'index.cpp';
     const defaultContent = '#include <iostream>\nint main() { std::cout << "Hello, World!"; return 0; }';
-
-    const newFile = new File({
-      name: defaultFileName,
-      content: defaultContent,
-      room: null, 
-    });
-    await newFile.save();
-
+    
     const room = new Room({
       owner,
       title,
-      files: [newFile._id],
+      files: [],
       users: [owner], 
     });
-    await room.save();
 
-    newFile.room = room._id;
+    await room.save();
+    
+    const newFile = new File({
+      name: defaultFileName,
+      content: defaultContent,
+      room: room._id,
+      owner: owner
+    });
     await newFile.save();
 
-    // Populate the response (optional)
+    room.files.push(newFile._id);
+    await room.save();
+
     const populatedRoom = await Room.findById(room._id)
       .populate('owner', 'name email username')
       .populate('users', 'name email username')
@@ -59,20 +55,18 @@ export const createRoom = async (req, res) => {
   }
 };
 
-export const getRoomsByUsername = async (req, res) => {
+export const getRoomsById = async (req, res) => {
   try {
-    const { username } = req.params;
+    const { userId } = req.params;
 
-    const user = await User.findOne({ username });
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
     const rooms = await Room.find({ owner: user._id })
-      .populate('owner', 'name email username')
-      .populate('users', 'name email username')
-      .populate('files')
-      .populate('messages');
+      .populate('owner', 'name email username avatar')
+      .populate('users', 'name email username avatar');
 
     res.status(200).json({ success: true, rooms });
   } catch (error) {
@@ -83,22 +77,19 @@ export const getRoomsByUsername = async (req, res) => {
 
 export const getRoomById = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { roomId } = req.params;
 
-    if (!isValidObjectId(id)) {
+    if (!isValidObjectId(roomId)) {
       return res.status(400).json({ message: 'Invalid room ID' });
     }
 
-    const room = await Room.findById(id)
-      .populate('owner', 'name email username')
-      .populate('users', 'name email username')
-      .populate({
-        path: 'files',
-        // optionally select fields: .select('name content')
-      })
+    const room = await Room.findById(roomId)
+      .populate('owner', 'name email username _id')
+      .populate('users', 'name email username _id')
+      .populate('files')
       .populate({
         path: 'messages',
-        populate: { path: 'user', select: 'name email username' },
+        populate: { path: 'user', select: 'name email username _id' },
       });
 
     if (!room) {

@@ -46,9 +46,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-950">
-        <header className="sticky top-0 z-50 w-full border-b border-white/20 bg-slate-950/95 backdrop-blur supports-[backdrop-filter]:bg-slate-950/75">
-          <Navbar />
-        </header>
+        
       
 
       <main className="relative min-h-screen bg-slate-950 flex flex-col items-center justify-center overflow-hidden">
@@ -231,15 +229,6 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-white/40 bg-slate-950">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-          
-          <div className="py-4 sm:py-6 text-center text-xs sm:text-sm text-gray-400 border-t border-white/10">
-            © 2024 Code-Buddy. All rights reserved.
-          </div>
-        </div>
-      </footer>
       {/* Animation Keyframes */}
             <style jsx>{`
                 @keyframes blob {

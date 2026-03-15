@@ -1,26 +1,12 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import userService from "../../services/userService";
+import { useAuthContext } from "../../context/AuthContext";
 
 export default function PrivateRoute({ children }) {
-  const [loading, setLoading] = useState(true);
-  const [isAuth, setIsAuth] = useState(false);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const res = await userService.getCurrentUser();
-
-      if (res.success) {
-        setIsAuth(true);
-      }
-
-      setLoading(false);
-    };
-
-    checkAuth();
-  }, []);
+  const { currentUser, loading } = useAuthContext();
 
   if (loading) return <div>Loading...</div>;
 
-  return isAuth ? children : <Navigate to="/auth?mode=login" />;
+  return currentUser !== null ? children : <Navigate to="/auth?mode=login" />;
 }

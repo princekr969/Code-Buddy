@@ -1,9 +1,11 @@
-import Home from "./Home";
-import AuthPage from "./AuthPage";
-import Dashboard from "./Dashboard";
+import Home from "./Home.page";
+import AuthPage from "./Auth.page";
+import Dashboard from "./Dashboard.page";
+import CodeSpace from "./CodeSpace.page";
 
 export {
   Home,
   AuthPage,
-  Dashboard
+  Dashboard,
+  CodeSpace,
 }

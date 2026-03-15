@@ -98,7 +98,7 @@ export const googleCallback = async (req, res) => {
       sameSite: "lax"
     });
 
-    res.redirect(`${process.env.DEVELOPMENT_FRONTEND_URL}/dashboard`);
+    res.redirect(`${process.env.DEVELOPMENT_FRONTEND_URL}/dashboard/${user.id}`);
 
   } catch (err) {
     res.status(500).json({

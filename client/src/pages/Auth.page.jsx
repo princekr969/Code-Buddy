@@ -19,7 +19,6 @@ export default function AuthPage() {
         authService.loginWithGoogle();
     };
 
-
     return (
         <div className="relative min-h-screen bg-slate-950 flex flex-col items-center justify-center overflow-hidden">
             {/* Animated Background Elements - Dark Theme */}

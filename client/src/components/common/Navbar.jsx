@@ -3,15 +3,14 @@ import { motion, AnimatePresence } from "framer-motion"
 import Button from "../ui/Button"
 import { Code2, Menu, X, User, LogOut, ChevronDown } from "lucide-react"
 import { useState } from "react"
-import { useAppContext } from "../../context/AppContext"
+import { useAuthContext } from "../../context/AuthContext"
 import authService from "../../services/authService"
 
 export default function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const [profileMenuOpen, setProfileMenuOpen] = useState(false)
     const navigate = useNavigate()
-    const { currentUser, setCurrentUser } = useAppContext();
-
+    const { currentUser, setCurrentUser } = useAuthContext();
 
     const handleLogout = async () => {
         try {
@@ -49,7 +48,7 @@ export default function Navbar() {
                         Languages
                     </a>
                     {currentUser && (
-                        <Link to="/dashboard" className="text-sm text-gray-300 hover:text-white transition-colors">
+                        <Link to={`/dashboard/${currentUser._id}`} className="text-sm text-gray-300 hover:text-white transition-colors">
                             Dashboard
                         </Link>
                     )}
@@ -168,7 +167,7 @@ export default function Navbar() {
                         </a>
                         {currentUser && (
                             <Link
-                                to="/dashboard"
+                                to={`/dashboard/${currentUser._id}`}
                                 className="text-gray-300 border-b border-white/20 hover:text-white py-2 px-3 rounded-lg hover:bg-gray-800 transition-colors"
                                 onClick={() => setMobileMenuOpen(false)}
                             >
