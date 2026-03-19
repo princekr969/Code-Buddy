@@ -16,24 +16,19 @@ const getInitials = (name) => {
 
 export default function UsersPanel() {
   const navigate = useNavigate();
-  const { roomId, currentRoom, loading } = useRoomContext();
+  const { roomId, currentRoom, loading, users, setUsers } = useRoomContext();
   const { currentUser } = useAuthContext();
   const { socket, on, off, emit } = useSocket();
-  const [users, setUsers] = useState([]);
-
-  // Update users when room data loads
-  useEffect(() => {
-    if (currentRoom && !loading) {
-      setUsers(currentRoom.users || []);
-    } else {
-      setUsers([]);
-    }
-  }, [currentRoom, loading]);
+  
 
   useEffect(() => {
     const handleUserJoined = ({ user }) => {
-      setUsers((prev) => [...prev, user]);
+      setUsers((prev) => {
+        if (prev.some((u) => u._id === user._id)) return prev;
+        return [...prev, user];
+      });
     };
+
     const handleUserLeft = ({ user }) => {
       setUsers((prev) => prev.filter((u) => u._id !== user._id));
     };
@@ -45,7 +40,7 @@ export default function UsersPanel() {
       off(SocketEvent.USER_JOINED, handleUserJoined);
       off(SocketEvent.USER_LEFT, handleUserLeft);
     };
-  }, [on, off]);
+  }, [on, off, setUsers]);
 
   const handleCopyRoomId = () => {
     if (!roomId) return;
@@ -69,7 +64,7 @@ export default function UsersPanel() {
   };
 
   return (
-    <div className="h-full bg-slate-900 border-r border-gray-700 text-white w-64 flex flex-col">
+    <div className="h-full bg-slate-950 border-r-2 border-gray-700 text-white w-64 flex flex-col">
       <div className="p-3 border-b border-gray-700">
         <h3 className="font-semibold">Connected Users</h3>
       </div>

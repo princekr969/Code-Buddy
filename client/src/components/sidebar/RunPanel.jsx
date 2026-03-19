@@ -30,7 +30,7 @@ export default function RunPanel() {
   };
 
   return (
-    <div className="h-full bg-slate-900 border-r border-gray-700 text-white w-64 p-3 flex flex-col">
+    <div className="h-full bg-slate-950 border-r-2 border-gray-700 text-white w-64 p-3 flex flex-col">
       <h3 className="font-semibold mb-3">Run Code</h3>
       <button
         onClick={runCode}

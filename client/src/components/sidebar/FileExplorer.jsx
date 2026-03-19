@@ -99,7 +99,7 @@ export default function FileExplorer() {
   };
 
   return (
-    <div className="w-64 h-full bg-slate-950 border-r border-gray-700 flex flex-col text-white">
+    <div className="w-64 h-full bg-slate-950 border-r-2 border-gray-700 flex flex-col text-white">
       <div className="flex items-center justify-between p-3 border-b border-gray-700">
         <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
           Files

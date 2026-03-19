@@ -9,7 +9,7 @@ const tabs = [
 
 export default function ActivityBar({ activeTab, setActiveTab }) {
   return (
-    <div className="w-16 bg-slate-950 border-r border-gray-800 flex flex-col items-center py-4">
+    <div className="w-16 bg-slate-950 border-r-2 border-gray-800 flex flex-col items-center py-4">
       {tabs.map(({ id, icon: Icon, label }) => (
         <button
           key={id}

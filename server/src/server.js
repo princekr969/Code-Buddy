@@ -3,6 +3,7 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import mongoose from 'mongoose';
+import expressStatusMonitor from 'express-status-monitor';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.route.js';
 import userRoutes from './routes/user.route.js';
@@ -16,6 +17,7 @@ const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
 app.use(cookieParser());
+// app.use(expressStatusMonitor());
 
 const allowedOrigins = [
     process.env.DEVELOPMENT_FRONTEND_URL, 
@@ -36,7 +38,6 @@ app.use(
 );
 
 
-// Global error handling
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: 'Something went wrong!' });

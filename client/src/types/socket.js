@@ -8,6 +8,7 @@ export const SocketEvent = {
 
   // File editing
   FILE_UPDATED: 'file-updated',
+  SAVE_FILE: 'save-file',
   FILE_SAVED: 'file-saved',
   FILE_CREATED: 'file-created',
   FILE_DELETED: 'file-deleted',
@@ -20,4 +21,9 @@ export const SocketEvent = {
   // Chat
   SEND_MESSAGE: 'send-message',
   NEW_MESSAGE: 'new-message',
+
+  REGISTER_AWARENESS: 'register-awareness',
+  AWARENESS_UPDATE: "awareness-update",
+  FILE_SYNC: "file-sync",
+  REQUEST_FILE_SYNC: "request-file-sync",
 };

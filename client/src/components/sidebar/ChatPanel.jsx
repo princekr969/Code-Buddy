@@ -5,6 +5,7 @@ import { useRoomContext } from "../../context/RoomContext";
 import { SocketEvent } from "../../types/socket";
 import toast from "react-hot-toast";
 import roomService from "../../services/roomService";
+import { Send } from "lucide-react";
 
 export default function ChatPanel() {
   const { roomId } = useRoomContext();
@@ -65,7 +66,7 @@ export default function ChatPanel() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-900 border-r border-gray-700 text-white w-64">
+    <div className="h-full flex flex-col bg-slate-950 border-r-2 border-gray-700 text-white w-64">
       <div className="p-3 border-b border-gray-700 font-semibold">Chat</div>
 
       <div className="flex-1 overflow-y-auto p-2 space-y-3">
@@ -101,7 +102,7 @@ export default function ChatPanel() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-2 border-t border-gray-700">
+      <div className="relative p-2 border-t border-gray-700">
         <input
           type="text"
           value={input}
@@ -110,6 +111,14 @@ export default function ChatPanel() {
           placeholder="Type a message..."
           className="w-full bg-gray-800 text-white px-3 py-2 rounded text-sm"
         />
+        <button
+          onClick={sendMessage}
+          disabled={!input.trim()}
+          className="absolute right-2 top-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2.5 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition"
+          title="Send"
+        >
+          <Send size={16} />
+        </button>
       </div>
     </div>
   );
