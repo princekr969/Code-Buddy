@@ -15,7 +15,7 @@ export const useFileSystem = () => {
 export const FileProvider = ({ children, initialFiles = [] }) => {
   const { currentUser } = useAuthContext();
   const { roomId } = useRoomContext();
-  const { isConnected, emit } = useSocket();
+  const { isConnected, emit, on, socket } = useSocket();
 
   const [files, setFiles] = useState(initialFiles);
   const [openFiles, setOpenFiles] = useState([]);
@@ -65,33 +65,37 @@ export const FileProvider = ({ children, initialFiles = [] }) => {
   }, [setOpenFilesWithRef, setActiveFileWithRef]);
 
   const createFile = useCallback(
-    (fileData) => {
-      const newFile = {
-        _id: fileData._id || `file-${Date.now()}`,
-        name: fileData.name || "untitled",
-        content: fileData.content || "",
-        isDirty: false,
-        ...fileData,
-      };
+  (fileData) => {
+    const tempId = `temp-${Date.now()}`;
+    const newFile = {
+      _id: tempId,
+      name: fileData.name || "untitled",
+      content: fileData.content || "",
+      isDirty: false,
+    };
 
-      setFilesWithRef((prev) => [...prev, newFile]);
+    setFilesWithRef((prev) => [...prev, newFile]);
+    setOpenFilesWithRef((prev) => {
+      if (prev.some((f) => f._id === tempId)) return prev;
+      return [...prev, newFile];
+    });
+    setActiveFileWithRef(newFile);
 
-      setOpenFilesWithRef((prev) => {
-        if (prev.some((f) => f._id === newFile._id)) return prev;
-        return [...prev, newFile];
+    if (isConnected && roomId) {
+      emit(SocketEvent.FILE_CREATED, {
+        file: {
+          name: newFile.name,
+          content: newFile.content,
+          roomId,
+          tempId, 
+        },
       });
-      setActiveFileWithRef(newFile);
+    }
 
-      if (isConnected && roomId) {
-        emit(SocketEvent.FILE_CREATED, {
-          file: { name: newFile.name, content: newFile.content, room: roomId },
-        });
-      }
-
-      return newFile;
-    },
-    [isConnected, emit, roomId, setFilesWithRef, setOpenFilesWithRef, setActiveFileWithRef],
-  );
+    return newFile;
+  },
+  [isConnected, emit, roomId, setFilesWithRef, setOpenFilesWithRef, setActiveFileWithRef],
+);
 
   const renameFile = useCallback(
     (fileId, newName) => {
@@ -140,6 +144,47 @@ export const FileProvider = ({ children, initialFiles = [] }) => {
     },
     [closeFile, isConnected, emit, setFilesWithRef],
   );
+
+  // Add to RoomNotificationListener or a new useEffect in FileContext
+
+// When another user creates a file — add it to our list
+on(SocketEvent.FILE_CREATED, ({ file }) => {
+  setFilesWithRef((prev) => {
+    if (prev.some((f) => f._id === file._id)) return prev;
+    return [...prev, file];
+  });
+});
+
+// When server confirms our created file with real DB _id
+on(SocketEvent.FILE_CREATED_CONFIRM, ({ tempId, file }) => {
+  // ✅ Swap temp id with real DB id in all state
+  setFilesWithRef((prev) =>
+    prev.map((f) => (f._id === tempId ? { ...f, ...file } : f))
+  );
+  setOpenFilesWithRef((prev) =>
+    prev.map((f) => (f._id === tempId ? { ...f, ...file } : f))
+  );
+  setActiveFileWithRef((prev) =>
+    prev?._id === tempId ? { ...prev, ...file } : prev
+  );
+});
+
+on(SocketEvent.FILE_DELETED, ({ fileId }) => {
+  setFilesWithRef((prev) => prev.filter((f) => f._id !== fileId));
+  closeFile(fileId);
+});
+
+on(SocketEvent.FILE_RENAMED, ({ fileId, newName }) => {
+  setFilesWithRef((prev) =>
+    prev.map((f) => (f._id === fileId ? { ...f, name: newName } : f))
+  );
+  setOpenFilesWithRef((prev) =>
+    prev.map((f) => (f._id === fileId ? { ...f, name: newName } : f))
+  );
+  setActiveFileWithRef((prev) =>
+    prev?._id === fileId ? { ...prev, name: newName } : prev
+  );
+});
 
   const value = {
     files,

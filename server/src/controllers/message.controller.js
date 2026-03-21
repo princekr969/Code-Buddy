@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
-import { Room, File, Message } from '../models/Room.model.js';
-import User from '../models/User.model.js'; 
+import { Room, Message } from '../models/Room.model.js';
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 

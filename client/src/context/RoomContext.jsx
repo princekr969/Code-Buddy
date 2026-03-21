@@ -10,8 +10,6 @@ export const useRoomContext = () => {
   return useContext(RoomContext);
 };
 
-
-
 const RoomProvider = ({ children }) => {
     const { roomId } = useParams();
     const [currentRoom, setCurrentRoom] = useState(null);
@@ -28,7 +26,6 @@ const RoomProvider = ({ children }) => {
            const res = await roomService.getRoomById(roomId);
            if (res.success) {
              setCurrentRoom(res.room);
-             setUsers(res.room.users || []);
            }
          } catch (error) {
            console.error('Failed to fetch room:', error);

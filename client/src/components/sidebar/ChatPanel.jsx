@@ -21,6 +21,10 @@ export default function ChatPanel() {
   };
 
   useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
     if (!roomId) return;
 
     const fetchMessages = async () => {
@@ -29,7 +33,7 @@ export default function ChatPanel() {
         const data = await roomService.getRoomMessages(roomId);
         if (data.success) {
           setMessages(data.messages.reverse());
-          setTimeout(scrollToBottom, 100);
+        
         } else {
           toast.error("Failed to load messages");
         }
@@ -47,7 +51,6 @@ export default function ChatPanel() {
   useEffect(() => {
     const handleNewMessage = (message) => {
       setMessages((prev) => [...prev, message]);
-      scrollToBottom();
     };
 
     on(SocketEvent.NEW_MESSAGE, handleNewMessage);
@@ -62,7 +65,7 @@ export default function ChatPanel() {
 
   const formatTime = (isoString) => {
     const date = new Date(isoString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   return (
@@ -71,7 +74,9 @@ export default function ChatPanel() {
 
       <div className="flex-1 overflow-y-auto p-2 space-y-3">
         {loading ? (
-          <div className="text-gray-400 text-sm text-center">Loading messages...</div>
+          <div className="text-gray-400 text-sm text-center">
+            Loading messages...
+          </div>
         ) : (
           messages.map((msg) => {
             const isOwn = msg.user?._id === currentUser?._id;
@@ -84,12 +89,12 @@ export default function ChatPanel() {
                   className={`max-w-[80%] rounded-lg px-2 py-2 ${
                     isOwn ? "bg-slate-700" : "bg-slate-800"
                   }`}
-                > 
-                {!isOwn && (
-                  <div className="text-[10px] font-semibold text-slate-300">
-                    {msg.user?.name || "Unknown"}
-                  </div>
-                )}
+                >
+                  {!isOwn && (
+                    <div className="text-[10px] font-semibold text-slate-300">
+                      {msg.user?.name || "Unknown"}
+                    </div>
+                  )}
                   <div className="text-sm text-white pl-1">{msg.message}</div>
                   <div className="text-[10px] pl-3 text-slate-300 text-right mt-1">
                     {formatTime(msg.time)}

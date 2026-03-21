@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.route.js';
 import userRoutes from './routes/user.route.js';
 import roomRoutes from './routes/room.route.js';
+import executeRoutes from './routes/execute.route.js';
 import { setupSocketIO } from './socket.js';
 
 const app = express();
@@ -47,6 +48,7 @@ app.use((err, req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/room", roomRoutes);
+app.use("/api/code", executeRoutes);
 
 
 // mongodb connection

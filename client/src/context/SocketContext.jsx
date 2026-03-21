@@ -17,7 +17,7 @@ export const SocketProvider = ({
   url = import.meta.env.VITE_REACT_APP_SOCKET_URL || 'http://localhost:3001',
 }) => {
   const { currentUser } = useAuthContext();
-  const { roomId, setUsers } = useRoomContext();
+  const { roomId, setUsers, users } = useRoomContext();
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
   const socketInstanceRef = useRef(null);
@@ -54,11 +54,6 @@ export const SocketProvider = ({
       setIsConnected(false);
     });
 
-    socket.on(SocketEvent.ROOM_JOINED, ({ roomId, connectedUsers }) => {
-      setUsers([currentUser, ...connectedUsers]);
-      console.log(`Successfully joined room: ${roomId}`);
-    });
-
     return () => {
       socket.disconnect();
       socketRef.current = null;
@@ -67,12 +62,17 @@ export const SocketProvider = ({
     };
   }, [url, currentUser]);
 
-  // Re-join room when roomId changes
   useEffect(() => {
     if (isConnected && socketRef.current && roomId) {
       socketRef.current.emit(SocketEvent.JOIN_ROOM, { roomId, userId: currentUser?._id });
     }
+
+socketRef.current.on(SocketEvent.ROOM_JOINED, ({ connectedUsers }) => {
+  setUsers([currentUser, ...(connectedUsers || [])]);
+});
   }, [roomId, isConnected, currentUser]);
+
+
 
   const emit = useCallback((event, data) => {
     if (socketRef.current?.connected) {
@@ -95,7 +95,6 @@ export const SocketProvider = ({
     socketRef.current?.once(event, callback);
   }, []);
 
-  // ── value uses a getter so consumers always read the live socket ──────────
   const value = {
     get socket() { return socketRef.current; },
     isConnected,

@@ -16,31 +16,32 @@ const getInitials = (name) => {
 
 export default function UsersPanel() {
   const navigate = useNavigate();
-  const { roomId, currentRoom, loading, users, setUsers } = useRoomContext();
+  const { roomId, users, setUsers } = useRoomContext();
   const { currentUser } = useAuthContext();
   const { socket, on, off, emit } = useSocket();
   
 
-  useEffect(() => {
-    const handleUserJoined = ({ user }) => {
-      setUsers((prev) => {
-        if (prev.some((u) => u._id === user._id)) return prev;
-        return [...prev, user];
-      });
-    };
+useEffect(() => {
+  const handleUserJoined = ({ user }) => {
+    setUsers((prev) => {
+      if (prev.some((u) => u._id === user._id)) return prev;
+      return [...prev, user];
+    });
+  };
 
-    const handleUserLeft = ({ user }) => {
-      setUsers((prev) => prev.filter((u) => u._id !== user._id));
-    };
+  const handleUserLeft = ({ user }) => {
+    setUsers((prev) => prev.filter((u) => u._id !== user._id));
+  };
 
-    on(SocketEvent.USER_JOINED, handleUserJoined);
-    on(SocketEvent.USER_LEFT, handleUserLeft);
+  on(SocketEvent.USER_JOINED, handleUserJoined);
+  on(SocketEvent.ROOM_LEAVED, handleUserLeft);
 
-    return () => {
-      off(SocketEvent.USER_JOINED, handleUserJoined);
-      off(SocketEvent.USER_LEFT, handleUserLeft);
-    };
-  }, [on, off, setUsers]);
+  return () => {
+    off(SocketEvent.USER_JOINED, handleUserJoined);
+    off(SocketEvent.ROOM_LEAVED, handleUserLeft);
+  };
+}, [on, off, setUsers]);
+
 
   const handleCopyRoomId = () => {
     if (!roomId) return;

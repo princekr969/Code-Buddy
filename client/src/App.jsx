@@ -8,6 +8,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { RoomProvider } from "./context/RoomContext";
 import { SocketProvider } from "./context/SocketContext";
 import { FileProvider } from "./context/FileContext";
+import { ExecuteCodeContextProvider } from "./context/ExecuteCodeContext";
 import MainLayout from "./layouts/MainLayout";
 
 function App() {
@@ -15,8 +16,6 @@ function App() {
     <Router>
       <AuthProvider>
         <Routes>
-
-          
           <Route
             path="/room/:roomId"
             element={
@@ -24,7 +23,10 @@ function App() {
                 <RoomProvider>
                   <SocketProvider>
                     <FileProvider>
-                      <CodeSpace />
+                      <ExecuteCodeContextProvider>
+
+                        <CodeSpace />
+                      </ExecuteCodeContextProvider>
                     </FileProvider>
                   </SocketProvider>
                 </RoomProvider>

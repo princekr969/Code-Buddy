@@ -106,6 +106,11 @@
   useEffect(() => {
     if (!isEditorReady || !editorRef.current || !activeFile || !socket) return;
 
+    if (activeFile._id?.startsWith("temp-")) {
+    console.log("Skipping Yjs setup for temp file:", activeFile._id);
+    return;
+  }
+
     // ── Yjs doc setup ─────────────────────────────────────────────────────
     let ydoc;
     if (!ydocsMapRef.current.has(activeFile._id)) {
@@ -485,7 +490,7 @@ socket.on(SocketEvent.FILE_SAVED, handleFileSaved);
 
     if (!activeFile) {
       return (
-        <div className="flex flex-col items-center justify-center h-full bg-zinc-800 text-slate-200">
+        <div className="flex flex-col items-center justify-center h-full bg-slate-950 text-slate-200">
           <div className="text-2xl font-semibold mb-2">No file is open</div>
           <p className="text-md mb-4">
             Select a file from the sidebar or create a new one to begin coding...
@@ -506,12 +511,7 @@ socket.on(SocketEvent.FILE_SAVED, handleFileSaved);
           onMount={handleEditorDidMount}
         />
 
-        {activeFile.isDirty && (
-          <div className="absolute bottom-4 right-4 bg-yellow-600 text-white px-3 py-1 rounded text-sm">
-            Unsaved changes
-          </div>
-        )}
-      </div>
+      </div>  
     );
   }
 

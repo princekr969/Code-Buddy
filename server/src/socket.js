@@ -1,18 +1,33 @@
 import { Server } from "socket.io";
 import * as Y from "yjs";
-import { File, Message, Room } from "./models/Room.model.js";
+import mongoose from "mongoose";
+import { File, Room, Message } from "./models/Room.model.js";
 
 export const SOCKET_EVENTS = {
   JOIN_ROOM: "join-room",
   ROOM_JOINED: "room-joined",
-  FILE_UPDATED: "file-updated",
+  LEAVE_ROOM: 'leave-room',
+  ROOM_LEAVED: 'room-leaved',
+
+  USER_JOINED: "user-joined",
+  USER_LEFT: "user-left",
+
   FILE_SYNC: "file-sync",
   REQUEST_FILE_SYNC: "request-file-sync",
+
   SAVE_FILE: "save-file",
   FILE_SAVED: "file-saved",
+  FILE_UPDATED: "file-updated",
+  FILE_CREATED: "file-created",
+  FILE_DELETED: "file-deleted",
+  FILE_RENAMED: "file-renamed",
+
+
+  // Chat
+  SEND_MESSAGE: 'send-message',
+  NEW_MESSAGE: 'new-message',
+
   AWARENESS_UPDATE: "awareness-update",
-  USER_LEFT: "user-left",
-  USER_JOINED: "user-joined",
 };
 
 export const setupSocketIO = (server) => {
@@ -24,7 +39,7 @@ export const setupSocketIO = (server) => {
     transports: ["websocket"],
   });
 
-  const docs = new Map(); // fileId -> Y.Doc
+  const docs = new Map();
 
   const getYDoc = async (fileId) => {
     if (!docs.has(fileId)) {
@@ -57,10 +72,9 @@ export const setupSocketIO = (server) => {
     socket.on(SOCKET_EVENTS.JOIN_ROOM, async ({ roomId }) => {
       socket.join(roomId);
       currentRoom = roomId;
-
       const socketsInRoom = await io.in(roomId).fetchSockets();
       const connectedUsers = socketsInRoom
-        .filter((s) => s.id !== socket.id) // exclude self
+        .filter((s) => s.id !== socket.id)
         .map((s) => s.user)
         .filter(Boolean);
 
@@ -73,7 +87,19 @@ export const setupSocketIO = (server) => {
       socket.to(currentRoom).emit(SOCKET_EVENTS.USER_JOINED, {
         user: socket.user,
       });
+
     });
+
+    // ───────── LEAVE ROOM ─────────
+    socket.on(SOCKET_EVENTS.LEAVE_ROOM, ({ roomId }) => {
+      if (!currentRoom) return;
+      socket.to(currentRoom).emit(SOCKET_EVENTS.ROOM_LEAVED, {
+        user: socket.user,
+      });
+      socket.leave(roomId);
+      currentRoom = null;
+    });
+
 
     // ───────── REQUEST FULL SYNC ─────────
     socket.on(SOCKET_EVENTS.REQUEST_FILE_SYNC, async ({ fileId }) => {
@@ -96,6 +122,68 @@ export const setupSocketIO = (server) => {
       });
     });
 
+
+    // ───────── FILE CREATED ─────────
+    socket.on(SOCKET_EVENTS.FILE_CREATED, async ({ file }) => {
+      if (!currentRoom) return;
+
+      try {
+        const newFile = await File.create({
+          name: file.name,
+          content: file.content || "",
+          room: file.roomId,
+          owner: socket.user._id,
+        });
+
+        const room = await Room.findById(file.roomId);
+        room.files.push(newFile._id);
+        await room.save();
+
+        socket.to(currentRoom).emit(SOCKET_EVENTS.FILE_CREATED, {
+          file: newFile,
+        });
+
+        socket.emit(SOCKET_EVENTS.FILE_CREATED_CONFIRM, {
+          tempId: file.tempId,
+          file: newFile,
+        });
+
+        console.log("File created:", newFile.name);
+      } catch (err) {
+        console.error("Failed to create file:", err);
+      }
+    });
+
+    // ───────── FILE DELETED ─────────
+    socket.on(SOCKET_EVENTS.FILE_DELETED, async ({ fileId }) => {
+      if (!currentRoom) return;
+
+      try {
+        await File.findByIdAndDelete(fileId);
+
+        socket.to(currentRoom).emit(SOCKET_EVENTS.FILE_DELETED, { fileId });
+
+        console.log("File deleted:", fileId);
+      } catch (err) {
+        console.error("Failed to delete file:", err);
+      }
+    });
+
+    // ───────── FILE RENAMED ─────────
+    socket.on(SOCKET_EVENTS.FILE_RENAMED, async ({ fileId, newName }) => {
+      if (!currentRoom) return;
+
+      try {
+        await File.findByIdAndUpdate(fileId, { name: newName });
+
+        socket.to(currentRoom).emit(SOCKET_EVENTS.FILE_RENAMED, { fileId, newName });
+
+        console.log("File renamed:", fileId, "->", newName);
+      } catch (err) {
+        console.error("Failed to rename file:", err);
+      }
+    });
+
     // ───────── RECEIVE UPDATE ─────────
     socket.on(SOCKET_EVENTS.FILE_UPDATED, async ({ fileId, update }) => {
       if (!currentRoom) return;
@@ -112,7 +200,6 @@ export const setupSocketIO = (server) => {
 
     socket.on(SOCKET_EVENTS.SAVE_FILE, async ({ fileId, content }) => {
       if (!content) {
-        // fallback to Yjs doc if no content sent
         const ydoc = docs.get(fileId);
         if (!ydoc) return;
         content = ydoc.getText("content").toString();
@@ -125,15 +212,44 @@ export const setupSocketIO = (server) => {
         fileId,
         content,
       });
-
-      console.log("Saved file:", fileId);
     });
 
 
+    // ───────── SEND MESSAGE ─────────
+    socket.on(SOCKET_EVENTS.SEND_MESSAGE, async ({ content }) => {
+      if (!currentRoom) return;
+      if (!content?.trim()) return;
+
+      try {
+        const message = await Message.create({
+          room: currentRoom,
+          user: socket.user._id,
+          message: content.trim(),
+          time: new Date(),
+        });
+
+        const populated = await message.populate("user", "name _id");
+
+        io.to(currentRoom).emit(SOCKET_EVENTS.NEW_MESSAGE, {
+          _id: populated._id,
+          message: populated.message,
+          time: populated.time,
+          user: populated.user,
+        });
+
+        console.log("Message sent:", populated.message);
+      } catch (err) {
+        console.error("Failed to save message:", err);
+      }
+    });
+
     socket.on("disconnect", () => {
-      socket.to(currentRoom).emit(SOCKET_EVENTS.USER_LEFT, {
-        user: socket.user,
-      });
+      console.log(socket.user?.name, "disconnected");
+      if (currentRoom) {
+        socket.to(currentRoom).emit(SOCKET_EVENTS.ROOM_LEAVED, {
+          user: socket.user,
+        });
+      }
     });
   });
 

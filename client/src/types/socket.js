@@ -3,20 +3,20 @@ export const SocketEvent = {
   JOIN_ROOM: 'join-room',
   ROOM_JOINED: 'room-joined',
   LEAVE_ROOM: 'leave-room',
-  USER_JOINED: 'user-joined',
-  USER_LEFT: 'user-left',
+  ROOM_LEAVED: 'room-leaved',
+
+  USER_JOINED: "user-joined",
+  USER_LEFT: "user-left",
+
 
   // File editing
   FILE_UPDATED: 'file-updated',
   SAVE_FILE: 'save-file',
   FILE_SAVED: 'file-saved',
   FILE_CREATED: 'file-created',
+  FILE_CREATED_CONFIRM: "file-created-confirm",
   FILE_DELETED: 'file-deleted',
   FILE_RENAMED: 'file-renamed',
-
-  // Typing indicators
-  TYPING_START: 'typing-start',
-  TYPING_PAUSE: 'typing-pause',
 
   // Chat
   SEND_MESSAGE: 'send-message',
