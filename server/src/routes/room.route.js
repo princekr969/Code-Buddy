@@ -8,5 +8,6 @@ router.post("/create", verifyToken, createRoom);
 router.get("/:roomId", verifyToken, getRoomById);
 router.get("/user/rooms/:userId",verifyToken, getRoomsById);
 router.get("/:roomId/messages", verifyToken, getRoomMessages);
+ 
 
 export default router;

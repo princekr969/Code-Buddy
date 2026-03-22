@@ -4,9 +4,9 @@ import { Navbar, Footer } from '../components/common/index.js'
 function MainLayout() {
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex flex-col">
+    <div className="min-h-screen bg-linear-to-b from-indigo-50 to-white flex flex-col">
       <Navbar />
-      <main className="flex-1  ">
+      <main className="flex-1">
         <Outlet />
       </main>
       <Footer />

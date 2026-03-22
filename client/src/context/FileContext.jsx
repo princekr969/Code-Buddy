@@ -21,7 +21,6 @@ export const FileProvider = ({ children, initialFiles = [] }) => {
   const [openFiles, setOpenFiles] = useState([]);
   const [activeFile, setActiveFile] = useState(null);
 
-  // ── stable ref so callbacks always see latest files without re-creating ──
   const filesRef = useRef(files);
   const openFilesRef = useRef(openFiles);
   const activeFileRef = useRef(activeFile);

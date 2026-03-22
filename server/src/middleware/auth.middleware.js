@@ -1,16 +1,16 @@
-import jwt from "jsonwebtoken";
+import jwt, { decode } from "jsonwebtoken";
+import { decodeUpdateV2 } from "yjs";
 
 export const verifyToken = (req, res, next) => {
   try {
     const token = req.cookies.accessToken;
-    
     if (!token) {
       return res.status(401).json({ message: "No token provided" });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     req.user = decoded;
+
 
     next();
   } catch (err) {

@@ -65,8 +65,8 @@ export const getRoomsById = async (req, res) => {
     }
 
     const rooms = await Room.find({ owner: user._id })
-      .populate('owner', 'name email username avatar')
-      .populate('users', 'name email username avatar');
+      .populate('owner', 'name email avatar')
+      .populate('users', 'name email avatar');
 
     res.status(200).json({ success: true, rooms });
   } catch (error) {

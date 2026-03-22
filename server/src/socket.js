@@ -2,6 +2,8 @@ import { Server } from "socket.io";
 import * as Y from "yjs";
 import mongoose from "mongoose";
 import { File, Room, Message } from "./models/Room.model.js";
+import User from "./models/User.model.js";
+
 
 export const SOCKET_EVENTS = {
   JOIN_ROOM: "join-room",
@@ -70,23 +72,44 @@ export const setupSocketIO = (server) => {
 
     // ───────── JOIN ROOM ─────────
     socket.on(SOCKET_EVENTS.JOIN_ROOM, async ({ roomId }) => {
-      socket.join(roomId);
-      currentRoom = roomId;
-      const socketsInRoom = await io.in(roomId).fetchSockets();
-      const connectedUsers = socketsInRoom
-        .filter((s) => s.id !== socket.id)
-        .map((s) => s.user)
-        .filter(Boolean);
+      try {
+        
+        socket.join(roomId);
+        currentRoom = roomId;
+        const socketsInRoom = await io.in(roomId).fetchSockets();
+        const connectedUsers = socketsInRoom
+          .filter((s) => s.id !== socket.id)
+          .map((s) => s.user)
+          .filter(Boolean);
+  
+        socket.emit(SOCKET_EVENTS.ROOM_JOINED, {
+          roomId,
+          connectedUsers,
+        });
+  
+  
+        socket.to(currentRoom).emit(SOCKET_EVENTS.USER_JOINED, {
+          user: socket.user,
+        });
 
-      socket.emit(SOCKET_EVENTS.ROOM_JOINED, {
-        roomId,
-        connectedUsers,
-      });
+const roomObjectId = new mongoose.Types.ObjectId(roomId);
+await User.findByIdAndUpdate(socket.user._id, {
+  $pull: { recentRooms: { room: roomObjectId } },
+});
 
+await User.findByIdAndUpdate(socket.user._id, {
+  $push: {
+    recentRooms: {
+      $each: [{ room: roomObjectId, joinedAt: new Date() }],
+      $position: 0,
+      $slice: 10,
+    },
+  },})
 
-      socket.to(currentRoom).emit(SOCKET_EVENTS.USER_JOINED, {
-        user: socket.user,
-      });
+      } catch (error) {
+        console.error('Error joining room:', error);
+        socket.emit('error', { message: 'Failed to join room' })
+      }
 
     });
 

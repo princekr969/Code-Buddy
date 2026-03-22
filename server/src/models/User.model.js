@@ -1,75 +1,90 @@
-import mongoose from "mongoose";
+    import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: function() {
-            return !this.googleId && !this.githubId;
+    const userSchema = new mongoose.Schema({
+        name: {
+            type: String,
+            required: function() {
+                return !this.googleId && !this.githubId;
+            },
+            trim: true,
         },
-        trim: true,
-    },
 
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-        lowercase: true,
-        trim: true,
-    },
-    password: {
-        type: String,
-        required: function() {
-            return !this.googleId && !this.githubId;
+        email: {
+            type: String,
+            required: true,
+            unique: true,
+            lowercase: true,
+            trim: true,
         },
-        minlength: 6,
-    },
-    
-    googleId: {
-        type: String,
-        unique: true,
-        sparse: true, 
-    },
+        password: {
+            type: String,
+            required: function() {
+                return !this.googleId && !this.githubId;
+            },
+            minlength: 6,
+        },
+        
+        googleId: {
+            type: String,
+            unique: true,
+            sparse: true, 
+        },
 
-    avatar: {
-        type: String,
-        default: '',
-    },
-    
-    
-    providers: [{
-        provider: {
+        avatar: {
+            type: String,
+            default: '',
+        },
+        
+        
+        providers: [{
+            provider: {
+                type: String,
+                enum: ['local', 'google', 'github'],
+            },
+            providerId: String,
+            linkedAt: {
+                type: Date,
+                default: Date.now,
+            },
+        }],
+        
+        isEmailVerified: {
+            type: Boolean,
+            default: false,
+        },
+
+        lastLoginProvider: {
             type: String,
             enum: ['local', 'google', 'github'],
         },
-        providerId: String,
-        linkedAt: {
-            type: Date,
-            default: Date.now,
+        
+        refreshToken: {
+            type: String,
+            select: false,
         },
-    }],
-    
-    isEmailVerified: {
-        type: Boolean,
-        default: false,
-    },
+        
+        emailVerificationToken: String,
+        emailVerificationExpires: Date,
+        
+        passwordResetToken: String,
+        passwordResetExpires: Date,
 
-    lastLoginProvider: {
-        type: String,
-        enum: ['local', 'google', 'github'],
+        recentRooms: {
+        type: [{
+            room: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Room',
+                required: true,
+            },
+            joinedAt: {
+                type: Date,
+                default: Date.now,
+            },
+        }],
+        default: [],
     },
-    
-    refreshToken: {
-        type: String,
-        select: false,
-    },
-    
-    emailVerificationToken: String,
-    emailVerificationExpires: Date,
-    
-    passwordResetToken: String,
-    passwordResetExpires: Date,
-}, {
-    timestamps: true,
-});
+    }, {
+        timestamps: true,
+    });
 
-export default mongoose.model('User', userSchema);
+    export default mongoose.model('User', userSchema);

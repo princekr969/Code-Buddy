@@ -28,7 +28,6 @@ const ExecuteCodeContextProvider = ({ children }) => {
 
   const { activeFile } = useFileSystem();
 
-  
   const extMap = {
   py:     "python",
   js:     "javascript",
@@ -55,7 +54,6 @@ const ExecuteCodeContextProvider = ({ children }) => {
   groovy: "groovy",
   ex:     "elixir",
   pas:    "pascal",
-  // ✅ removed d and f90 — not supported by JDoodle LANG_MAP
 };
 
   useEffect(() => {
@@ -86,7 +84,6 @@ useEffect(() => {
   const matches = supportedLanguages.filter((l) => l.language === pistonLang);
   if (matches.length === 0) return;
 
-  // ✅ Pick highest version — for typescript picks 5.0.3 not 1.32.3 (deno)
   const latest = matches.sort((a, b) =>
     b.version.localeCompare(a.version, undefined, { numeric: true })
   )[0];

@@ -17,11 +17,12 @@ export const SocketProvider = ({
   url = import.meta.env.VITE_REACT_APP_SOCKET_URL || 'http://localhost:3001',
 }) => {
   const { currentUser } = useAuthContext();
-  const { roomId, setUsers, users } = useRoomContext();
+  const { roomId, setUsers } = useRoomContext();
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
-  const socketInstanceRef = useRef(null);
+  const joinedRoomRef = useRef(null); // tracks which room was actually joined
 
+  // Create socket once per user
   useEffect(() => {
     if (!currentUser?._id) return;
 
@@ -34,19 +35,18 @@ export const SocketProvider = ({
     });
 
     socketRef.current = socket;
-    socketInstanceRef.current = socket;
 
     socket.on('connect', () => {
       console.log('Socket connected:', socket.id);
       setIsConnected(true);
-      if (roomId) {
-        socket.emit(SocketEvent.JOIN_ROOM, { roomId, userId: currentUser._id });
-      }
+      // Reset so the roomId effect re-joins after reconnection
+      joinedRoomRef.current = null;
     });
 
     socket.on('disconnect', (reason) => {
       console.log('Socket disconnected:', reason);
       setIsConnected(false);
+      joinedRoomRef.current = null;
     });
 
     socket.on('connect_error', (error) => {
@@ -57,22 +57,32 @@ export const SocketProvider = ({
     return () => {
       socket.disconnect();
       socketRef.current = null;
-      socketInstanceRef.current = null;
+      joinedRoomRef.current = null;
       setIsConnected(false);
     };
   }, [url, currentUser]);
 
+  // Join room — guarded so JOIN_ROOM is never emitted twice for the same room
   useEffect(() => {
-    if (isConnected && socketRef.current && roomId) {
-      socketRef.current.emit(SocketEvent.JOIN_ROOM, { roomId, userId: currentUser?._id });
-    }
+    if (!isConnected || !socketRef.current || !roomId) return;
+    if (joinedRoomRef.current === roomId) return; // already joined, skip
 
-socketRef.current.on(SocketEvent.ROOM_JOINED, ({ connectedUsers }) => {
-  setUsers([currentUser, ...(connectedUsers || [])]);
-});
+    joinedRoomRef.current = roomId;
+    socketRef.current.emit(SocketEvent.JOIN_ROOM, { roomId, userId: currentUser?._id });
   }, [roomId, isConnected, currentUser]);
 
+  // ROOM_JOINED listener — separate effect so it survives reconnects
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket) return;
 
+    const handleRoomJoined = ({ connectedUsers }) => {
+      setUsers([currentUser, ...(connectedUsers || [])]);
+    };
+
+    socket.on(SocketEvent.ROOM_JOINED, handleRoomJoined);
+    return () => socket.off(SocketEvent.ROOM_JOINED, handleRoomJoined);
+  }, [currentUser, setUsers, isConnected]);
 
   const emit = useCallback((event, data) => {
     if (socketRef.current?.connected) {
